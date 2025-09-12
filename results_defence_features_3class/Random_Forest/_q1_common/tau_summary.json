@@ -1,0 +1,9 @@
+{
+  "tau_legacy_quantile": 0.26304349303245544,
+  "tau_conformal_nat_risk": 0.9309462904930115,
+  "settings": {
+    "target_risk_nat": 0.05,
+    "delta": 0.05,
+    "nat_calib_ratio": 0.2
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "generated_at": "2025-09-12T05:53:18.820492+00:00",
+  "by_attack": {
+    "FGSM": {
+      "detector_auroc": {
+        "mean": 0.9949668954246668,
+        "std": 0.0035564872174562614
+      },
+      "detector_ap": {
+        "mean": 0.9953191137386567,
+        "std": 0.003307118881489459
+      },
+      "accept_rate_overall": {
+        "mean": 0.4543986666666666,
+        "std": 0.0030735574755575124
+      },
+      "accept_rate_nat": {
+        "mean": 0.9001,
+        "std": 0.0
+      },
+      "accept_rate_adv": {
+        "mean": 0.008697333333333333,
+        "std": 0.0061471149511150526
+      },
+      "base_auc_nat_slice": {
+        "mean": 0.9785120255480338,
+        "std": 0.003429751149859004
+      },
+      "base_auc_adv_slice": {
+        "mean": 0.9415196279947539,
+        "std": 0.01360452550455539
+      },
+      "base_auc_accepted_adv": {
+        "mean": NaN,
+        "std": NaN
+      },
+      "base_auc_accepted_nat": {
+        "mean": 0.9734842516590526,
+        "std": 0.004269436601635501
+      }
+    },
+    "PGD": {
+      "detector_auroc": {
+        "mean": 0.9949677175760002,
+        "std": 0.003557649915022203
+      },
+      "detector_ap": {
+        "mean": 0.9953200584329925,
+        "std": 0.0033084548810312807
+      },
+      "accept_rate_overall": {
+        "mean": 0.4543983333333333,
+        "std": 0.003074028880078317
+      },
+      "accept_rate_nat": {
+        "mean": 0.9001,
+        "std": 0.0
+      },
+      "accept_rate_adv": {
+        "mean": 0.008696666666666667,
+        "std": 0.006148057760156636
+      },
+      "base_auc_nat_slice": {
+        "mean": 0.9785120255480338,
+        "std": 0.003429751149859004
+      },
+      "base_auc_adv_slice": {
+        "mean": 0.5522173736228879,
+        "std": 0.15985161918613458
+      },
+      "base_auc_accepted_adv": {
+        "mean": NaN,
+        "std": NaN
+      },
+      "base_auc_accepted_nat": {
+        "mean": 0.9734842516590526,
+        "std": 0.004269436601635501
+      }
+    }
+  }
+}

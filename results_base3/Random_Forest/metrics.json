@@ -1,0 +1,10 @@
+{
+  "model": "Random_Forest",
+  "samples_evaluated": 600001,
+  "accuracy": 0.88413,
+  "precision_macro": 0.895432,
+  "recall_macro": 0.88413,
+  "f1_macro": 0.88429,
+  "auc_ovr": 0.958581,
+  "timestamp": "2025-09-12T07:02:07.713402+00:00"
+}

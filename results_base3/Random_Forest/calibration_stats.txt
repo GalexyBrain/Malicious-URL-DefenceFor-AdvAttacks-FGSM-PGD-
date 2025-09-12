@@ -1,0 +1,3 @@
+Brier (multiclass): 0.062339
+ECE macro (bins=15): 0.025955
+LogLoss (CE): 0.347305

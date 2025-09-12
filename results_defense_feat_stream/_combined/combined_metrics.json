@@ -1,0 +1,80 @@
+[
+  {
+    "base_model": "DL-MLP",
+    "attack": "FGSM",
+    "detector_auroc": 0.9999965279,
+    "detector_ap": 0.9999960861,
+    "accept_rate_overall": 0.450052,
+    "accept_rate_nat": 0.9001,
+    "accept_rate_adv": 4e-06,
+    "base_auc_nat_slice": 0.9753289225,
+    "base_auc_adv_slice": 0.9229939308,
+    "base_auc_accepted_adv": null,
+    "base_auc_accepted_nat": 0.9695360021
+  },
+  {
+    "base_model": "DL-MLP",
+    "attack": "PGD",
+    "detector_auroc": 0.9999989943,
+    "detector_ap": 0.9999989202,
+    "accept_rate_overall": 0.450051,
+    "accept_rate_nat": 0.9001,
+    "accept_rate_adv": 2e-06,
+    "base_auc_nat_slice": 0.9753289225,
+    "base_auc_adv_slice": 0.3683779817,
+    "base_auc_accepted_adv": null,
+    "base_auc_accepted_nat": 0.9695360021
+  },
+  {
+    "base_model": "Random_Forest",
+    "attack": "FGSM",
+    "detector_auroc": 0.9924520792,
+    "detector_ap": 0.9929806276,
+    "accept_rate_overall": 0.456572,
+    "accept_rate_nat": 0.9001,
+    "accept_rate_adv": 0.013044,
+    "base_auc_nat_slice": 0.9832730692,
+    "base_auc_adv_slice": 0.9462854134,
+    "base_auc_accepted_adv": null,
+    "base_auc_accepted_nat": 0.9794144638
+  },
+  {
+    "base_model": "Random_Forest",
+    "attack": "PGD",
+    "detector_auroc": 0.9924520792,
+    "detector_ap": 0.9929806276,
+    "accept_rate_overall": 0.456572,
+    "accept_rate_nat": 0.9001,
+    "accept_rate_adv": 0.013044,
+    "base_auc_nat_slice": 0.9832730692,
+    "base_auc_adv_slice": 0.7580717821,
+    "base_auc_accepted_adv": null,
+    "base_auc_accepted_nat": 0.9794144638
+  },
+  {
+    "base_model": "LightGBM",
+    "attack": "FGSM",
+    "detector_auroc": 0.9924520792,
+    "detector_ap": 0.9929806276,
+    "accept_rate_overall": 0.456572,
+    "accept_rate_nat": 0.9001,
+    "accept_rate_adv": 0.013044,
+    "base_auc_nat_slice": 0.9769340849,
+    "base_auc_adv_slice": 0.9552795398,
+    "base_auc_accepted_adv": null,
+    "base_auc_accepted_nat": 0.971502289
+  },
+  {
+    "base_model": "LightGBM",
+    "attack": "PGD",
+    "detector_auroc": 0.9924520792,
+    "detector_ap": 0.9929806276,
+    "accept_rate_overall": 0.456572,
+    "accept_rate_nat": 0.9001,
+    "accept_rate_adv": 0.013044,
+    "base_auc_nat_slice": 0.9769340849,
+    "base_auc_adv_slice": 0.5302023571,
+    "base_auc_accepted_adv": null,
+    "base_auc_accepted_nat": 0.971502289
+  }
+]

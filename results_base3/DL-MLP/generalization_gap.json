@@ -1,0 +1,6 @@
+{
+  "acc_gap_train_val": 0.00026852820882306006,
+  "acc_gap_train_test": 0.00032837639240934635,
+  "auc_ovr_gap_train_val": 0.0002495939303427397,
+  "auc_ovr_gap_train_test": -8.007759751083032e-05
+}

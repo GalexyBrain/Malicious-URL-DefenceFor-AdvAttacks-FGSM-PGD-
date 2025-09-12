@@ -1,0 +1,13 @@
+{
+  "scenario": "mixed_PGD",
+  "gate": "gate_conformal",
+  "tau_used": 0.9309462904930115,
+  "adaptive": {
+    "steps": 20,
+    "alpha": 0.02,
+    "lambda_gate": 3.0,
+    "margin": 0.02
+  },
+  "adv_accept_rate_adaptive": 1.8e-05,
+  "adv_slip_as_nat_rate_adaptive": 0.4444444444444444
+}

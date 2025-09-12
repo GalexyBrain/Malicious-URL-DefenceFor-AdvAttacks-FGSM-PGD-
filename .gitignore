@@ -1,0 +1,17 @@
+# Ignore virtual environment folder
+venv/
+
+# Ignore all CSV files
+*.csv
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore all models 
+*.joblib
+*.pt
+
+models*/
+
+metrics*.txt

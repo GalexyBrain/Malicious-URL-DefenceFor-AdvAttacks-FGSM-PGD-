@@ -1,0 +1,50 @@
+{
+  "scenario": "mixed_FGSM",
+  "gate": "gate_conformal",
+  "timestamp": "2025-09-12T11:03:56.032792+00:00",
+  "threeclass_model": "LightGBM",
+  "stream_counts": {
+    "nat": 500000,
+    "adv": 500000
+  },
+  "gate_stats": {
+    "accept_rate_nat": 0.999564,
+    "accept_rate_adv": 0.04533,
+    "nat_block_rate": 0.000436
+  },
+  "three_class": {
+    "accuracy": 0.8959358556944532,
+    "f1_macro": 0.6166286535644675,
+    "auc_ovr": 0.9148226062714518,
+    "per_class": {
+      "0": {
+        "precision": 0.9378292095765689,
+        "recall": 0.9357377232633518,
+        "f1": 0.9367822990437322,
+        "support": 250209
+      },
+      "1": {
+        "precision": 0.8585065044771076,
+        "recall": 0.9365957054649341,
+        "f1": 0.8958526158050156,
+        "support": 249573
+      },
+      "2": {
+        "precision": 0.3831417624521073,
+        "recall": 0.008824178248400618,
+        "f1": 0.017251045844654332,
+        "support": 22665
+      }
+    },
+    "counts": {
+      "total_accepted": 522447,
+      "nat_accepted": 499782,
+      "adv_accepted": 22665
+    },
+    "accepted_nat_calibration": {
+      "ece": 0.04477239724589779,
+      "brier": 0.05384124459701919
+    },
+    "adv_pred2_rate_accepted": 0.008824178248400618
+  }
+}

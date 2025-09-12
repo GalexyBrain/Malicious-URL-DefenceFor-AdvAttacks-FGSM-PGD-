@@ -1,0 +1,50 @@
+{
+  "scenario": "mixed_FGSM",
+  "gate": "energy_quantile",
+  "timestamp": "2025-09-12T10:12:30.538200+00:00",
+  "threeclass_model": "DL-MLP",
+  "stream_counts": {
+    "nat": 500000,
+    "adv": 500000
+  },
+  "gate_stats": {
+    "accept_rate_nat": 0.995072,
+    "accept_rate_adv": 0.995276,
+    "nat_block_rate": 0.004928
+  },
+  "three_class": {
+    "accuracy": 0.9391995771593711,
+    "f1_macro": 0.9302344657169158,
+    "auc_ovr": 0.9873638475065505,
+    "per_class": {
+      "0": {
+        "precision": 0.9342059273722144,
+        "recall": 0.9330850841853522,
+        "f1": 0.9336451693851945,
+        "support": 249212
+      },
+      "1": {
+        "precision": 0.8405932690119527,
+        "recall": 0.9371184420354054,
+        "f1": 0.8862353212240771,
+        "support": 248324
+      },
+      "2": {
+        "precision": 1.0,
+        "recall": 0.9433001499081661,
+        "f1": 0.9708229065414762,
+        "support": 497638
+      }
+    },
+    "counts": {
+      "total_accepted": 995174,
+      "nat_accepted": 497536,
+      "adv_accepted": 497638
+    },
+    "accepted_nat_calibration": {
+      "ece": 0.06905889178370826,
+      "brier": 0.057970188297277216
+    },
+    "adv_pred2_rate_accepted": 0.9433001499081661
+  }
+}
