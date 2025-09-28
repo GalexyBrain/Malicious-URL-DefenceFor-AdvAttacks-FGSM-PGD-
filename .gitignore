@@ -15,3 +15,5 @@ __pycache__/
 models*/
 
 metrics*.txt
+
+temp
