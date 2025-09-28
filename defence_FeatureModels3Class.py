@@ -18,8 +18,9 @@ Additions (preserving original outputs & file names):
 Restrictions (per your request):
 - Only these base (binary) models are used for attack crafting: DL-MLP, LightGBM, Random_Forest.
 
-Run:
-  python eval_3class_q1.py --model all --cache-adv --no-progress
+New (requested) outputs (no logic changed):
+- results_3class/...                  ← duplicate of “no defense” (pure 3-class)
+- results_3class_plus_detector/...    ← duplicate of conformal-gated (3-class + LGBM detector)
 """
 
 from __future__ import annotations
@@ -63,8 +64,10 @@ CFG = {
     "dataset_csv": "features_extracted.csv",       # dataset used by base models (label in {0,1})
     "label_col": "label",
 
-    # RESULTS
+    # RESULTS (original tree + new clean trees)
     "results_dir": "results_defence_features_3class",
+    "results_dir_3class": "results_3class",
+    "results_dir_3class_plus_detector": "results_3class_plus_detector",
 
     # ATTACK budget in z-space of base scaler
     "eps_z": 0.40,
@@ -881,6 +884,8 @@ def main():
     # Load base globals & dataset
     models_root = Path(CFG["models_dir"])
     results_root = ensure_dir(Path(CFG["results_dir"]))
+    results_root_3c  = ensure_dir(Path(CFG["results_dir_3class"]))
+    results_root_3cd = ensure_dir(Path(CFG["results_dir_3class_plus_detector"]))
     defense_root = Path(CFG["defense_dir"])
 
     scaler_base, feat_base = load_globals(models_root)
@@ -896,8 +901,10 @@ def main():
     calibrator = None
     cal_path = defense_root / "calibrator.joblib"
     if cal_path.exists():
-        try: calibrator = joblib.load(cal_path); print("[INFO] Using isotonic calibrator for defense probabilities.")
-        except Exception: calibrator = None
+        try:
+            calibrator = joblib.load(cal_path); print("[INFO] Using isotonic calibrator for defense probabilities.")
+        except Exception:
+            calibrator = None
 
     # p_adv over full NAT pool
     p_adv_full = defense_p_adv(
@@ -985,6 +992,9 @@ def main():
     for base_name, base_est in bases:
         print(f"\n==== Using base (for ATTACK crafting only): {base_name} ====")
         out_root = ensure_dir(results_root / base_name)
+        out_root_3c  = ensure_dir(results_root_3c  / base_name)
+        out_root_3cd = ensure_dir(results_root_3cd / base_name)
+
         # Load paired 3c
         kind3, name3, est3 = get_threeclass_for_base(base_name)
 
@@ -1004,7 +1014,8 @@ def main():
             p_adv_full[nat_calib_idx], y_nat_cal, P3_nat_cal,
             target_risk=CFG["target_risk_nat"], delta=CFG["conformal_delta"], grid=CFG["tau_grid_size"]
         )
-        # Save τs
+
+        # Save τs (original)
         common_dir = ensure_dir(out_root / "_q1_common")
         save_json({"tau_legacy_quantile": float(tau_legacy),
                    "tau_conformal_nat_risk": float(tau_conf),
@@ -1012,8 +1023,17 @@ def main():
                                 "nat_calib_ratio": CFG["nat_calib_ratio"]}},
                   common_dir / "tau_summary.json")
 
-        # Risk–coverage curve CSV for the gate
+        # Also mirror τ summary & gate risk-coverage into detector tree
+        common_dir_3cd = ensure_dir(out_root_3cd / "_q1_common")
+        save_json({"tau_legacy_quantile": float(tau_legacy),
+                   "tau_conformal_nat_risk": float(tau_conf),
+                   "settings": {"target_risk_nat": CFG["target_risk_nat"], "delta": CFG["conformal_delta"],
+                                "nat_calib_ratio": CFG["nat_calib_ratio"]}},
+                  common_dir_3cd / "tau_summary.json")
+
+        # Risk–coverage curve CSV for the gate (original + mirror)
         df_rc.to_csv(common_dir / "risk_coverage_gate.csv", index=False)
+        df_rc.to_csv(common_dir_3cd / "risk_coverage_gate.csv", index=False)
         if CFG["use_plots"]:
             fig, ax = plt.subplots(figsize=(7,5))
             ax.plot(df_rc["coverage_nat"], df_rc["risk_nat"], marker="o", linewidth=1)
@@ -1021,7 +1041,14 @@ def main():
             ax.set_title(f"Risk–Coverage (Gate) — {base_name}/{name3}")
             fig.tight_layout(); fig.savefig(common_dir / "risk_coverage_gate.png", dpi=200); plt.close(fig)
 
-        # Baseline gates: MSP & Energy (Energy only if logits available)
+            # mirror image to detector tree
+            fig, ax = plt.subplots(figsize=(7,5))
+            ax.plot(df_rc["coverage_nat"], df_rc["risk_nat"], marker="o", linewidth=1)
+            ax.set_xlabel("Coverage (NAT accepted)"); ax.set_ylabel("Risk on accepted NAT")
+            ax.set_title(f"Risk–Coverage (Gate) — {base_name}/{name3}")
+            fig.tight_layout(); fig.savefig(common_dir_3cd / "risk_coverage_gate.png", dpi=200); plt.close(fig)
+
+        # Baseline gates: MSP & Energy (Energy only if logits available) — original tree only
         msp_nat = msp_scores_nat(P3_nat_eval)
         tau_msp = float(np.quantile(msp_nat, CFG["tau_quantile_3c"])) if msp_nat.size else 1.0
 
@@ -1038,6 +1065,8 @@ def main():
         # Per attack kind (FGSM/PGD)
         for which in ["FGSM", "PGD"]:
             out_dir = ensure_dir(out_root / f"mixed_{which}")
+            out_dir_3c  = ensure_dir(out_root_3c  / f"mixed_{which}")
+            out_dir_3cd = ensure_dir(out_root_3cd / f"mixed_{which}")
             cache_dir = ensure_dir(out_root / "_cache")
             steps_used = int(CFG["steps_fgsm"] if which == "FGSM" else CFG["steps_pgd"])
 
@@ -1138,18 +1167,30 @@ def main():
 
             acc_nd = float(accuracy_score(y3_mixed, yhat3_mixed))
             f1_nd  = float(f1_score(y3_mixed, yhat3_mixed, average="macro"))
-            try: auc_nd = float(roc_auc_score(y3_mixed, P3_mixed, multi_class="ovr"))
-            except Exception: auc_nd = None
+            try:
+                auc_nd = float(roc_auc_score(y3_mixed, P3_mixed, multi_class="ovr"))
+            except Exception:
+                auc_nd = None
             per_class_nd = _per_class_metrics(y3_mixed, yhat3_mixed, LABELS3)
             cm_nd = cm_as_dict(y3_mixed, yhat3_mixed, LABELS3)
 
+            # plots (original)
             if CFG["use_plots"]:
                 plot_confusion_3c(y3_mixed, yhat3_mixed, out_path=out_dir / "confusion_no_def.png", title=f"3-class Confusion (no defense) [{name3}]")
                 if auc_nd is not None:
                     plot_roc_multiclass(y3_mixed, P3_mixed, out_path=out_dir / "roc_ovr_no_def.png", title=f"ROC OvR (no defense) [{name3}]")
+                # mirrored plots to 3-class clean tree
+                plot_confusion_3c(y3_mixed, yhat3_mixed, out_path=out_dir_3c / "confusion_no_def.png", title=f"3-class Confusion (no defense) [{name3}]")
+                if auc_nd is not None:
+                    plot_roc_multiclass(y3_mixed, P3_mixed, out_path=out_dir_3c / "roc_ovr_no_def.png", title=f"ROC OvR (no defense) [{name3}]")
+
+            # classification report (original + mirror)
             try:
-                save_text(classification_report(y3_mixed, yhat3_mixed, digits=4), out_dir / "classification_report_no_def.txt")
-            except Exception: pass
+                rep_txt = classification_report(y3_mixed, yhat3_mixed, digits=4)
+                save_text(rep_txt, out_dir / "classification_report_no_def.txt")
+                save_text(rep_txt, out_dir_3c / "classification_report_no_def.txt")
+            except Exception:
+                pass
 
             # NAT-only NO DEFENSE
             nat_mask_all = (y3_mixed != 2)
@@ -1161,8 +1202,32 @@ def main():
             cm_nat_nd = cm_as_dict(y_nat_only, yhat_nat_only, NAT_CM_LABELS)
             if CFG["use_plots"]:
                 plot_confusion_nat(y_nat_only, yhat_nat_only, out_path=out_dir / "confusion_nat_no_def.png", title=f"NAT-only Confusion (no defense) [{name3}]")
+                plot_confusion_nat(y_nat_only, yhat_nat_only, out_path=out_dir_3c / "confusion_nat_no_def.png", title=f"NAT-only Confusion (no defense) [{name3}]")
 
-            # ---------- (B) AFTER DEFENSE for multiple gates ----------
+            # BEFORE (original + mirror)
+            before_payload = {
+                "scenario": f"mixed_{which}",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "attack_base_model": base_name,
+                "threeclass_model": name3,
+                "lenient_tau_3c": float(tau_legacy),
+                "stream_counts": {"nat": int(nat_idx_fixed.size), "adv": int(adv_idx_fixed.size), "total": int(nat_idx_fixed.size + adv_idx_fixed.size)},
+                "three_class": {
+                    "accuracy": acc_nd, "f1_macro": f1_nd, "auc_ovr": auc_nd,
+                    "per_class": per_class_nd, "counts": {"total": int(y3_mixed.size), "nat": int(y3_nat.size), "adv": int(y3_adv.size)},
+                    "adv_pred2_rate": float((P3_adv.argmax(axis=1) == 2).mean()) if P3_adv.shape[0] else float("nan"),
+                    "confusion": cm_nd,
+                },
+                "nat_only_slice": {
+                    "accuracy": acc_nat_nd, "f1_macro": f1_nat_nd, "per_class": per_class_nat_nd,
+                    "counts": {"nat_total": int(y_nat_only.size)}, "confusion": cm_nat_nd,
+                },
+                "attack": {"kind": which, "steps": steps_used, "eps_z": float(CFG["eps_z"]), "alpha_z": float(CFG["alpha_z"])},
+            }
+            save_json(before_payload, out_dir / "metrics_before_defense.json")
+            save_json(before_payload, out_dir_3c / "metrics_before_defense.json")
+
+            # ---------- (B) AFTER DEFENSE for multiple gates (original tree only) ----------
             gates = {
                 "gate_legacy": lambda pnat, padv: (accept_mask(pnat, tau_legacy), accept_mask(padv, tau_legacy)),
                 "gate_conformal": lambda pnat, padv: (accept_mask(pnat, tau_conf), accept_mask(padv, tau_conf)),
@@ -1182,7 +1247,7 @@ def main():
             else:
                 gates.pop("energy_quantile", None)  # skip if not reliable
 
-            # Evaluate each gate and save additive artifacts
+            # Evaluate each gate and save (original). If conformal, also mirror to 3cd.
             for gname, mask_fn in list(gates.items()):
                 if mask_fn is None: continue
                 acc_nat_mask, acc_adv_mask = mask_fn(p_adv_nat, p_adv_adv)
@@ -1198,8 +1263,10 @@ def main():
 
                     acc_ad = float(accuracy_score(y3_acc, yhat3_acc))
                     f1_ad  = float(f1_score(y3_acc, yhat3_acc, average="macro"))
-                    try: auc_ad = float(roc_auc_score(y3_acc, P3_acc, multi_class="ovr"))
-                    except Exception: auc_ad = None
+                    try:
+                        auc_ad = float(roc_auc_score(y3_acc, P3_acc, multi_class="ovr"))
+                    except Exception:
+                        auc_ad = None
                     per_class_ad = _per_class_metrics(y3_acc, yhat3_acc, LABELS3)
                     cm_ad = cm_as_dict(y3_acc, yhat3_acc, LABELS3)
 
@@ -1215,7 +1282,7 @@ def main():
                     adv_acc_rate = float(acc_adv_mask.mean()) if p_adv_adv.size else float("nan")
                     nat_block_rate = float((~acc_nat_mask).mean()) if p_adv_nat.size else float("nan")
 
-                    save_json({
+                    after_payload = {
                         "scenario": f"mixed_{which}",
                         "gate": gname,
                         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -1234,7 +1301,8 @@ def main():
                             "accepted_nat_calibration": {"ece": ece_nat, "brier": brier_nat},
                             "adv_pred2_rate_accepted": float((Pacc_adv.argmax(axis=1) == 2).mean()) if Pacc_adv.shape[0] else float("nan")
                         }
-                    }, out_dir / f"metrics_after_defense__{gname}.json")
+                    }
+                    save_json(after_payload, out_dir / f"metrics_after_defense__{gname}.json")
 
                     # Risk–coverage CSV for gate_* (not MSP/Energy)
                     if gname.startswith("gate_"):
@@ -1252,20 +1320,29 @@ def main():
                             risk = 1.0 - float(accuracy_score(Yacc, yhat))
                             cov = float((Yn.size + Ya.size)/ (len(y3_nat)+len(y3_adv)))
                             rows.append({"tau": float(tau), "coverage": cov, "risk": risk})
-                        pd.DataFrame(rows).to_csv(out_dir / f"risk_coverage__{gname}.csv", index=False)
+                        rc_df = pd.DataFrame(rows)
+                        rc_df.to_csv(out_dir / f"risk_coverage__{gname}.csv", index=False)
+
+                        # If conformal, mirror to 3cd tree
+                        if gname == "gate_conformal":
+                            save_json(after_payload, out_dir_3cd / f"metrics_after_defense__{gname}.json")
+                            rc_df.to_csv(out_dir_3cd / f"risk_coverage__{gname}.csv", index=False)
 
                 else:
                     # No accepted items: still log the gate stats
-                    save_json({
+                    na_payload = {
                         "scenario": f"mixed_{which}",
                         "gate": gname,
                         "timestamp": datetime.now(timezone.utc).isoformat(),
                         "threeclass_model": name3,
                         "stream_counts": {"nat": int(len(y3_nat)), "adv": int(len(y3_adv))},
                         "three_class": {"note": "no samples accepted at this threshold"}
-                    }, out_dir / f"metrics_after_defense__{gname}.json")
+                    }
+                    save_json(na_payload, out_dir / f"metrics_after_defense__{gname}.json")
+                    if gname == "gate_conformal":
+                        save_json(na_payload, out_dir_3cd / f"metrics_after_defense__{gname}.json")
 
-            # ---------- Preserve your original AFTER-DEFENSE (legacy τ) outputs exactly ----------
+            # ---------- Preserve original AFTER-DEFENSE (legacy τ) outputs exactly ----------
             acc_nat_mask_3c = (p_adv_nat < tau_legacy)
             acc_adv_mask_3c = (p_adv_adv < tau_legacy)
             Pacc_nat = P3_nat[acc_nat_mask_3c]; Yacc_nat = y3_nat[acc_nat_mask_3c]
@@ -1276,8 +1353,10 @@ def main():
                 yhat3_acc = P3_acc.argmax(axis=1)
                 acc_ad = float(accuracy_score(y3_acc, yhat3_acc))
                 f1_ad  = float(f1_score(y3_acc, yhat3_acc, average="macro"))
-                try: auc_ad = float(roc_auc_score(y3_acc, P3_acc, multi_class="ovr"))
-                except Exception: auc_ad = None
+                try:
+                    auc_ad = float(roc_auc_score(y3_acc, P3_acc, multi_class="ovr"))
+                except Exception:
+                    auc_ad = None
                 per_class_ad = _per_class_metrics(y3_acc, yhat3_acc, LABELS3)
                 cm_ad = cm_as_dict(y3_acc, yhat3_acc, LABELS3)
                 if CFG["use_plots"]:
@@ -1309,27 +1388,9 @@ def main():
             det_rate_nd   = float((P3_adv.argmax(axis=1) == 2).mean()) if P3_adv.shape[0] else float("nan")
             det_rate_acc  = float((Pacc_adv.argmax(axis=1) == 2).mean()) if Pacc_adv.shape[0] else float("nan")
 
-            # BEFORE
-            save_json({
-                "scenario": f"mixed_{which}",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "attack_base_model": base_name,
-                "threeclass_model": name3,
-                "lenient_tau_3c": float(tau_legacy),
-                "stream_counts": {"nat": int(nat_idx_fixed.size), "adv": int(adv_idx_fixed.size), "total": int(nat_idx_fixed.size + adv_idx_fixed.size)},
-                "three_class": {
-                    "accuracy": acc_nd, "f1_macro": f1_nd, "auc_ovr": auc_nd,
-                    "per_class": per_class_nd, "counts": {"total": int(y3_mixed.size), "nat": int(y3_nat.size), "adv": int(y3_adv.size)},
-                    "adv_pred2_rate": det_rate_nd, "confusion": cm_nd,
-                },
-                "nat_only_slice": {
-                    "accuracy": acc_nat_nd, "f1_macro": f1_nat_nd, "per_class": per_class_nat_nd,
-                    "counts": {"nat_total": int(y_nat_only.size)}, "confusion": cm_nat_nd,
-                },
-                "attack": {"kind": which, "steps": steps_used, "eps_z": float(CFG["eps_z"]), "alpha_z": float(CFG["alpha_z"])},
-            }, out_dir / "metrics_before_defense.json")
+            # BEFORE already saved above
 
-            # AFTER (legacy τ) — preserved filename/shape
+            # AFTER (legacy τ) — preserved filename/shape (original tree only)
             save_json({
                 "scenario": f"mixed_{which}",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -1408,7 +1469,7 @@ def main():
                     slip_rate = float(np.isin(yhat_adapt, [0,1]).mean())
                 else:
                     slip_rate = float("nan")
-                save_json({
+                adapt_payload = {
                     "scenario": f"mixed_{which}",
                     "gate": "gate_conformal",
                     "tau_used": float(tau_conf),
@@ -1418,7 +1479,9 @@ def main():
                     },
                     "adv_accept_rate_adaptive": float(acc_adv_mask_adapt.mean()),
                     "adv_slip_as_nat_rate_adaptive": slip_rate
-                }, out_dir / "metrics_adaptive_attack.json")
+                }
+                save_json(adapt_payload, out_dir / "metrics_adaptive_attack.json")
+                save_json(adapt_payload, out_dir_3cd / "metrics_adaptive_attack.json")
 
             # free per-attack memory
             del Xz_adv, p_adv_nat, p_adv_adv, P3_nat, P3_adv, P3_mixed, y3_mixed

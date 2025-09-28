@@ -1,6 +1,6 @@
 {
   "scenario": "mixed_FGSM",
-  "timestamp": "2025-09-12T11:03:59.211401+00:00",
+  "timestamp": "2025-09-28T09:57:24.240592+00:00",
   "attack_base_model": "LightGBM",
   "threeclass_model": "LightGBM",
   "lenient_tau_3c": 0.26304349303245544,
@@ -11,18 +11,18 @@
   },
   "gate": {
     "accept_rate_nat": 0.991306,
-    "accept_rate_adv": 0.042714,
+    "accept_rate_adv": 0.029194,
     "counts": {
       "nat_accepted": 495653,
       "nat_blocked": 4347,
-      "adv_accepted": 21357,
-      "adv_blocked": 478643
+      "adv_accepted": 14597,
+      "adv_blocked": 485403
     }
   },
   "three_class": {
-    "accuracy": 0.8974120423202646,
-    "f1_macro": 0.614279149851186,
-    "auc_ovr": 0.9149748325091899,
+    "accuracy": 0.9092758451739343,
+    "f1_macro": 0.6191255598933177,
+    "auc_ovr": 0.9143384725753045,
     "per_class": {
       "0": {
         "precision": 0.937827964397587,
@@ -31,24 +31,24 @@
         "support": 250204
       },
       "1": {
-        "precision": 0.8602770195126883,
+        "precision": 0.8825746225654028,
         "recall": 0.9360111469185044,
-        "f1": 0.8965475526140182,
+        "f1": 0.9085078070780748,
         "support": 245449
       },
       "2": {
-        "precision": 0.3355048859934853,
-        "recall": 0.004822774734279159,
-        "f1": 0.009508862629246677,
-        "support": 21357
+        "precision": 0.30612244897959184,
+        "recall": 0.006165650476125231,
+        "f1": 0.012087838291585521,
+        "support": 14597
       }
     },
     "counts": {
-      "total_accepted": 517010,
+      "total_accepted": 510250,
       "nat_accepted": 495653,
-      "adv_accepted": 21357
+      "adv_accepted": 14597
     },
-    "adv_pred2_rate_accepted": 0.004822774734279159,
+    "adv_pred2_rate_accepted": 0.006165650476125231,
     "confusion": {
       "labels": [
         0,
@@ -68,12 +68,12 @@
         ],
         [
           0,
-          21254,
-          103
+          14507,
+          90
         ]
       ],
-      "total": 517010,
-      "accuracy_from_confusion": 0.8974120423202646
+      "total": 510250,
+      "accuracy_from_confusion": 0.9092758451739343
     }
   },
   "nat_only_slice": {
