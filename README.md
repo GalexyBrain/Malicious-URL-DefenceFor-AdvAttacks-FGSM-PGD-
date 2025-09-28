@@ -50,7 +50,7 @@ This repository contains training/evaluation scripts and several pre-generated *
      ```
 
 3) **Craft the defense datasets** (feature-space):
-   ```bash
+  ```bash
    # NAT vs ADV feature dataset for detector training
    python prep_defensive_dataset_features.py
 
@@ -59,7 +59,7 @@ This repository contains training/evaluation scripts and several pre-generated *
 
    # Strictly balanced 3-class dataset for all-in-one models (0/1/2)
    python prep_defence_dataset_features_for_training.py
-````
+  ```
 
 4. **Train defenses**
 
