@@ -70,5 +70,135 @@ Use Python **3.9+** (recommended). Example:
 
 ```bash
 python -m venv .venv
+# Windows: .venv\Scripts\activate
 source .venv/bin/activate
 pip install -U pip
+````
+
+### 2) Install dependencies
+
+This repo does not currently expose a pinned `requirements.txt` in the root, so install what your scripts import (common stacks include `numpy`, `pandas`, `scikit-learn`, `lightgbm`, and a DL framework like `tensorflow` or `torch`).
+
+Recommended approach:
+
+1. Try running a training script once.
+2. Install missing imports as they appear.
+
+Example:
+
+```bash
+pip install numpy pandas scikit-learn lightgbm matplotlib tqdm
+```
+
+> Tip: If you want reproducibility, add a `requirements.txt` after a successful run:
+> `pip freeze > requirements.txt`
+
+---
+
+## Data
+
+Bring your own dataset (CSV or similar) containing:
+
+* A URL field (e.g., `url`)
+* A label field (e.g., `label`)
+
+Because datasets vary, check the top of each script for:
+
+* Input file path(s)
+* Column names
+* Label mapping (binary vs multi-class, “3-class” variants, etc.)
+
+A common workflow is:
+
+1. Clean/deduplicate data
+2. Extract features for defensive training
+3. Train baseline and defensive models
+4. Run FGSM/PGD evaluation
+
+---
+
+## Typical workflow
+
+### A) Prepare / clean dataset
+
+```bash
+python remove_dups_defensive.py
+```
+
+### B) Build defensive feature dataset
+
+```bash
+python prep_defensive_dataset_features.py
+python prep_defence_dataset_features_for_training.py
+```
+
+### C) Train baseline models
+
+```bash
+python TrainAllModels_ML.py
+python TrainAllModels_DL.py
+```
+
+### D) Train defensive models
+
+```bash
+python TrainAllFeatureDefensiveModels.py
+python train_DefensiveLightGBM.py
+```
+
+### E) Evaluate robustness under FGSM/PGD
+
+```bash
+python attackModels.py
+```
+
+Outputs should appear under one or more `results_*` folders (depending on the script/config you run).
+
+---
+
+## Understanding the “3-class” and “plus_detector” outputs
+
+You’ll see multiple results directories, including:
+
+* **`results_3class/`**: results for a 3-class classification setting
+* **`results_3class_plus_detector/`**: results where an additional *detector* component is evaluated (e.g., to flag adversarial/shifted samples)
+* **`results_defence_features_3class/`**: results for 3-class with defensive features/defence pipeline
+* **`results_evaluation/`**: consolidated evaluation outputs
+
+Exact meaning depends on your label mapping and config inside scripts.
+
+---
+
+## Reproducibility tips
+
+For consistent results:
+
+* Fix random seeds in Python / NumPy / your DL framework
+* Log:
+
+  * dataset version/hash
+  * feature extraction config
+  * model hyperparameters
+  * attack parameters (FGSM/PGD strength and iterations)
+* Save trained model artifacts and configs alongside outputs
+
+---
+
+## Safety & responsible disclosure
+
+If you discover a weakness or a method that significantly reduces detection accuracy:
+
+* Validate on controlled, synthetic, or permissioned datasets
+* Avoid sharing exploit-like details that enable real-world abuse
+* Prefer reporting defensively (mitigations, robustness improvements, evaluation evidence)
+
+---
+
+## Contributing
+
+PRs are welcome—especially for:
+
+* Adding a `requirements.txt`
+* Adding a single entry-point runner (CLI) and consistent config files
+* Documenting dataset format + sample config
+* Unit tests for feature extraction and evaluation pipelines
